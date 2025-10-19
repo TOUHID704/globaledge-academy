@@ -1,4 +1,4 @@
-package com.globaledge.academy.lms.controller;
+package com.globaledge.academy.lms.core.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

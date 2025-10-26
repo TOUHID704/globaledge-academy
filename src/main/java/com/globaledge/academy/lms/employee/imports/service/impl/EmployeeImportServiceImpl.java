@@ -1,6 +1,5 @@
 package com.globaledge.academy.lms.employee.imports.service.impl;
 
-
 import com.globaledge.academy.lms.employee.entity.Employee;
 import com.globaledge.academy.lms.employee.entity.EmployeeImportHistory;
 import com.globaledge.academy.lms.employee.enums.ImportStatus;
@@ -18,6 +17,8 @@ import com.globaledge.academy.lms.employee.imports.strategy.EmployeeImportStrate
 import com.globaledge.academy.lms.employee.imports.validator.chain.EmployeeImportValidator;
 import com.globaledge.academy.lms.employee.imports.writer.ImportLogWriter;
 import com.globaledge.academy.lms.employee.repository.EmployeeImportHistoryRepository;
+import com.globaledge.academy.lms.user.dto.BulkUserCreationSummary;
+import com.globaledge.academy.lms.user.service.BulkUserCreationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,7 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
     private final ImportLogWriter logWriter;
     private final EmployeeImportHistoryRepository historyRepository;
     private final Map<String, EmployeeImportStrategy> importStrategyMap;
+    private final BulkUserCreationService bulkUserCreationService;
 
     @Override
     @Transactional
@@ -54,21 +56,30 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
 
             List<EmployeeImportRecord> records = excelParser.parseFile(file);
 
-            // --- NEW STEP: Collect all employee IDs from this batch for cross-validation ---
             Set<String> employeeIdsInBatch = records.stream()
                     .map(EmployeeImportRecord::getEmployeeId)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
-            // --- UPDATED LINE: Pass the new set as the second argument ---
             List<EmployeeImportValidationResult> validationResults = validator.validateRecords(records, employeeIdsInBatch);
 
-            // PASS 1: Create/update all employees and collect them in a map.
+            // PASS 1: Create/update all employees and collect them in a map
             Map<String, Employee> processedEmployeesMap = processRecordsPassOne(validationResults, importedBy);
             int successCount = processedEmployeesMap.size();
 
-            // PASS 2: Link managers now that all employees are in the persistence context.
+            // PASS 2: Link managers now that all employees are in the persistence context
             linkManagersPassTwo(validationResults, processedEmployeesMap);
+
+            // PASS 3: Create user accounts for successfully imported employees
+            BulkUserCreationSummary userCreationSummary = null;
+            if (!processedEmployeesMap.isEmpty()) {
+                List<Employee> successfulEmployees = List.copyOf(processedEmployeesMap.values());
+                userCreationSummary = bulkUserCreationService.createUsersFromEmployees(successfulEmployees);
+                log.info("User creation summary - Created: {}, Skipped: {}, Failed: {}",
+                        userCreationSummary.getUsersCreated(),
+                        userCreationSummary.getUsersSkipped(),
+                        userCreationSummary.getUsersFailed());
+            }
 
             List<EmployeeImportLogEntryDTO> allLogs = collectAllLogs(validationResults);
             String logFilePath = null, logFileName = null;
@@ -81,10 +92,21 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
             int warningCount = allLogs.size() - errorCount;
             ImportStatus status = determineImportStatus(successCount, errorCount, records.size());
 
-            EmployeeImportHistory history = saveImportHistory(createImportContext(file, importedBy), records.size(), successCount, errorCount, warningCount, status, logFilePath, logFileName);
+            EmployeeImportHistory history = saveImportHistory(
+                    createImportContext(file, importedBy),
+                    records.size(),
+                    successCount,
+                    errorCount,
+                    warningCount,
+                    status,
+                    logFilePath,
+                    logFileName
+            );
 
-            log.info("Employee import completed. Status: {}, Success: {}, Errors: {}, Warnings: {}", status, successCount, errorCount, warningCount);
-            return buildImportResult(history);
+            log.info("Employee import completed. Status: {}, Success: {}, Errors: {}, Warnings: {}",
+                    status, successCount, errorCount, warningCount);
+
+            return buildImportResult(history, userCreationSummary);
 
         } catch (IOException e) {
             throw new EmployeeImportProcessingException("Failed to process the uploaded file.", e);
@@ -125,7 +147,6 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
                 Employee employee = processedEmployeesMap.get(employeeId);
                 Employee manager = processedEmployeesMap.get(managerId);
 
-                // This check is crucial. It ensures both employee and manager were successfully processed in pass one.
                 if (employee != null && manager != null) {
                     employee.setManager(manager);
                 }
@@ -134,11 +155,17 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
     }
 
     private EmployeeImportContext createImportContext(MultipartFile file, String importedBy) {
-        return EmployeeImportContext.builder().fileName(file.getOriginalFilename()).fileSize(file.getSize()).importedBy(importedBy).build();
+        return EmployeeImportContext.builder()
+                .fileName(file.getOriginalFilename())
+                .fileSize(file.getSize())
+                .importedBy(importedBy)
+                .build();
     }
 
     private List<EmployeeImportLogEntryDTO> collectAllLogs(List<EmployeeImportValidationResult> results) {
-        return results.stream().flatMap(r -> Stream.concat(r.getErrors().stream(), r.getWarnings().stream())).collect(Collectors.toList());
+        return results.stream()
+                .flatMap(r -> Stream.concat(r.getErrors().stream(), r.getWarnings().stream()))
+                .collect(Collectors.toList());
     }
 
     private String generateLogFileName(String originalFileName) {
@@ -153,21 +180,63 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
         return ImportStatus.SUCCESS;
     }
 
-    private EmployeeImportHistory saveImportHistory(EmployeeImportContext ctx, int total, int success, int error, int warn, ImportStatus status, String logPath, String logName) {
-        return historyRepository.save(EmployeeImportHistory.builder().fileName(ctx.getFileName()).fileSize(ctx.getFileSize()).totalRecords(total).successCount(success).errorCount(error).warningCount(warn).status(status).logFilePath(logPath).logFileName(logName).importedBy(ctx.getImportedBy()).build());
+    private EmployeeImportHistory saveImportHistory(
+            EmployeeImportContext ctx,
+            int total,
+            int success,
+            int error,
+            int warn,
+            ImportStatus status,
+            String logPath,
+            String logName) {
+
+        return historyRepository.save(EmployeeImportHistory.builder()
+                .fileName(ctx.getFileName())
+                .fileSize(ctx.getFileSize())
+                .totalRecords(total)
+                .successCount(success)
+                .errorCount(error)
+                .warningCount(warn)
+                .status(status)
+                .logFilePath(logPath)
+                .logFileName(logName)
+                .importedBy(ctx.getImportedBy())
+                .build());
     }
 
-    private EmployeeImportResultDTO buildImportResult(EmployeeImportHistory h) {
-        return EmployeeImportResultDTO.builder().importId(h.getId()).fileName(h.getFileName()).fileSize(h.getFileSize()).totalRecords(h.getTotalRecords()).successCount(h.getSuccessCount()).errorCount(h.getErrorCount()).warningCount(h.getWarningCount()).status(h.getStatus()).logFileName(h.getLogFileName()).importedAt(h.getImportedAt()).importedBy(h.getImportedBy()).message(buildResultMessage(h)).build();
+    private EmployeeImportResultDTO buildImportResult(EmployeeImportHistory h, BulkUserCreationSummary userSummary) {
+        return EmployeeImportResultDTO.builder()
+                .importId(h.getId())
+                .fileName(h.getFileName())
+                .fileSize(h.getFileSize())
+                .totalRecords(h.getTotalRecords())
+                .successCount(h.getSuccessCount())
+                .errorCount(h.getErrorCount())
+                .warningCount(h.getWarningCount())
+                .status(h.getStatus())
+                .logFileName(h.getLogFileName())
+                .importedAt(h.getImportedAt())
+                .importedBy(h.getImportedBy())
+                .message(buildResultMessage(h))
+                .userCreationSummary(userSummary)
+                .build();
     }
 
     private String buildResultMessage(EmployeeImportHistory h) {
         switch (h.getStatus()) {
-            case SUCCESS: return String.format("All %d records imported successfully.", h.getSuccessCount());
-            case COMPLETED_WITH_WARNINGS: return String.format("%d records imported successfully with %d warnings. See log file for details.", h.getSuccessCount(), h.getWarningCount());
-            case COMPLETED_WITH_ERRORS: return String.format("%d records imported successfully, while %d failed. See log file for details.", h.getSuccessCount(), h.getErrorCount());
-            case FAILED: return "Import failed. All records had critical errors. See log file for details.";
-            default: return "Import process finished.";
+            case SUCCESS:
+                return String.format("All %d records imported successfully.", h.getSuccessCount());
+            case COMPLETED_WITH_WARNINGS:
+                return String.format("%d records imported successfully with %d warnings. See log file for details.",
+                        h.getSuccessCount(), h.getWarningCount());
+            case COMPLETED_WITH_ERRORS:
+                return String.format("%d records imported successfully, while %d failed. See log file for details.",
+                        h.getSuccessCount(), h.getErrorCount());
+            case FAILED:
+                return "Import failed. All records had critical errors. See log file for details.";
+            default:
+                return "Import process finished.";
         }
     }
 }
+

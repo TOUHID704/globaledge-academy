@@ -4,11 +4,9 @@ import com.globaledge.academy.lms.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-
 
 public class UserDetailsImpl implements UserDetails {
 
@@ -40,21 +38,23 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return true; // You can implement account expiration logic if needed
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        // Check temporary lock status
+        return !user.isAccountLockedTemporarily();
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        // Password expiration is handled separately in authentication
+        return !user.getPasswordExpired();
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return user.getAccountEnabled();
     }
 }

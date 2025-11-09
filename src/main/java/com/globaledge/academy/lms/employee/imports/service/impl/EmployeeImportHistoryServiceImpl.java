@@ -1,5 +1,5 @@
 package com.globaledge.academy.lms.employee.imports.service.impl;
-import com.globaledge.academy.lms.employee.entity.EmployeeImportHistory;
+import com.globaledge.academy.lms.employee.imports.model.EmployeeImportHistory;
 import com.globaledge.academy.lms.employee.exception.ResourceNotFoundException;
 import com.globaledge.academy.lms.employee.imports.dto.EmployeeImportHistoryDTO;
 import com.globaledge.academy.lms.employee.imports.service.EmployeeImportHistoryService;

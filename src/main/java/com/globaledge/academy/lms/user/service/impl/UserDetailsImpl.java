@@ -38,7 +38,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // You can implement account expiration logic if needed
+        return true; // We don't implement account expiration
     }
 
     @Override
@@ -49,8 +49,9 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isCredentialsNonExpired() {
-        // Password expiration is handled separately in authentication
-        return !user.getPasswordExpired();
+        // CRITICAL: Return true here to prevent Spring Security from throwing CredentialsExpiredException
+        // We handle password expiration manually in AuthenticationServiceImpl
+        return true;
     }
 
     @Override

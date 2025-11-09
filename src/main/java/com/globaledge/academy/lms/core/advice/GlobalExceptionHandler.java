@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -102,11 +103,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex) {
         log.error("Bad credentials: {}", ex.getMessage());
+
+        // Return specific error message from exception
+        String message = ex.getMessage();
+        String errorCode = "BAD_CREDENTIALS";
+
+        // Determine specific error code based on message
+        if (message.contains("username") || message.contains("email")) {
+            errorCode = "INVALID_USERNAME";
+        } else if (message.contains("password")) {
+            errorCode = "INVALID_PASSWORD";
+        }
+
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiError.builder()
-                        .message("Invalid username or password")
-                        .errorCode("BAD_CREDENTIALS")
+                        .message(message)
+                        .errorCode(errorCode)
                         .build());
     }
 
@@ -118,6 +131,17 @@ public class GlobalExceptionHandler {
                 .body(ApiError.builder()
                         .message(ex.getMessage())
                         .errorCode("ACCOUNT_LOCKED")
+                        .build());
+    }
+
+    @ExceptionHandler(CredentialsExpiredException.class)
+    public ResponseEntity<ApiError> handleCredentialsExpired(CredentialsExpiredException ex) {
+        log.error("Credentials expired: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiError.builder()
+                        .message("Your password has expired. Please change your password to continue.")
+                        .errorCode("PASSWORD_EXPIRED")
                         .build());
     }
 
@@ -162,13 +186,35 @@ public class GlobalExceptionHandler {
     // GENERIC EXCEPTION HANDLER
     // ========================================================================
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiError> handleRuntimeException(RuntimeException ex) {
+        log.error("Runtime exception: {}", ex.getMessage(), ex);
+
+        // If it's a wrapped authentication exception, extract the message
+        if (ex.getMessage() != null && ex.getMessage().startsWith("Authentication failed:")) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiError.builder()
+                            .message(ex.getMessage())
+                            .errorCode("AUTHENTICATION_FAILED")
+                            .build());
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiError.builder()
+                        .message(ex.getMessage())
+                        .errorCode("RUNTIME_ERROR")
+                        .build());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception ex) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiError.builder()
-                        .message("An unexpected error occurred.")
+                        .message("An unexpected error occurred. Please try again later.")
                         .errorCode("INTERNAL_SERVER_ERROR")
                         .build());
     }

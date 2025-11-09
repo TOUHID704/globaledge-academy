@@ -1,4 +1,4 @@
-package com.globaledge.academy.lms.employee.entity;
+package com.globaledge.academy.lms.employee.imports.model;
 
 import com.globaledge.academy.lms.employee.enums.ImportStatus;
 import jakarta.persistence.*;

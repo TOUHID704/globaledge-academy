@@ -66,6 +66,10 @@ public class JwtFilter extends OncePerRequestFilter {
                     return;
                 }
 
+                // REMOVED: Password expired check - let the user access the API even with expired password
+                // The frontend should handle the password change flow based on the login response
+                // if (user.getPasswordExpired()) { ... }
+
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

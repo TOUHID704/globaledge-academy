@@ -1,7 +1,7 @@
 package com.globaledge.academy.lms.employee.imports.service.impl;
 
 import com.globaledge.academy.lms.employee.entity.Employee;
-import com.globaledge.academy.lms.employee.entity.EmployeeImportHistory;
+import com.globaledge.academy.lms.employee.imports.model.EmployeeImportHistory;
 import com.globaledge.academy.lms.employee.enums.ImportStatus;
 import com.globaledge.academy.lms.employee.enums.ImportStrategyType;
 import com.globaledge.academy.lms.employee.exception.EmployeeImportProcessingException;

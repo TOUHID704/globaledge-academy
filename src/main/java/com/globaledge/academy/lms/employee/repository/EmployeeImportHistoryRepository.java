@@ -1,7 +1,7 @@
 package com.globaledge.academy.lms.employee.repository;
 
 
-import com.globaledge.academy.lms.employee.entity.EmployeeImportHistory;
+import com.globaledge.academy.lms.employee.imports.model.EmployeeImportHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

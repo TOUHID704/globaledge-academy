@@ -1,6 +1,7 @@
 package com.globaledge.academy.lms.course.dto;
 
 import com.globaledge.academy.lms.course.enums.CourseCategory;
+import com.globaledge.academy.lms.course.enums.CourseStatus;
 import com.globaledge.academy.lms.course.enums.DifficultyLevel;
 import lombok.*;
 
@@ -24,8 +25,6 @@ public class CourseDto {
 
     private CourseCategory courseCategory;
 
-    private boolean published;
-
     private String instructor;
 
     private Integer estimatedDuration;
@@ -34,7 +33,9 @@ public class CourseDto {
 
     private LocalDateTime publishedAt;
 
+    private CourseStatus courseStatus;
+
     private String createdBy;
 
-    private List<CourseModuleDto> modules;   // Avoid exposing entities
+    private List<CourseModuleDto> modules;
 }

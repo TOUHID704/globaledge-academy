@@ -2,6 +2,7 @@ package com.globaledge.academy.lms.course.entity;
 
 import com.globaledge.academy.lms.course.enums.ContentType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ModuleContent {
 
     @Id
@@ -26,10 +28,7 @@ public class ModuleContent {
 
     private String mediaUrl;
 
-    @ManyToOne
-    @JoinColumn(name = "courseModuleId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "module_id")
     private CourseModule courseModule;
-
-
-
 }

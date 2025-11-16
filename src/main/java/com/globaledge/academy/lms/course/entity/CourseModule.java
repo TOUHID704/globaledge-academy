@@ -1,10 +1,12 @@
 package com.globaledge.academy.lms.course.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -12,6 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class CourseModule {
 
     @Id
@@ -22,18 +25,15 @@ public class CourseModule {
 
     private Integer moduleNumber;
 
-    @ManyToOne
-    @JoinColumn(name = "courseId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
     private Course course;
 
     @OneToMany(mappedBy = "courseModule", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ModuleContent> moduleContents;
+    private List<ModuleContent> moduleContents = new ArrayList<>();
 
-    public void addContent(ModuleContent content) {
-        moduleContents.add(content);
-        content.setCourseModule(this);
+    public void addContent(ModuleContent c) {
+        c.setCourseModule(this);
+        this.moduleContents.add(c);
     }
-
-
 }
-

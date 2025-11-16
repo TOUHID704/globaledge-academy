@@ -1,5 +1,8 @@
 package com.globaledge.academy.lms.core.advice;
 
+import com.globaledge.academy.lms.assignment.exception.AssignmentRuleNotFoundException;
+import com.globaledge.academy.lms.assignment.exception.InvalidRuleCriteriaException;
+import com.globaledge.academy.lms.assignment.exception.RuleExecutionException;
 import com.globaledge.academy.lms.core.dto.ApiError;
 import com.globaledge.academy.lms.employee.exception.EmployeeImportProcessingException;
 import com.globaledge.academy.lms.employee.exception.InvalidFileFormatException;
@@ -218,4 +221,42 @@ public class GlobalExceptionHandler {
                         .errorCode("INTERNAL_SERVER_ERROR")
                         .build());
     }
+
+    // ========================================================================
+    // ASSIGNMENT RULE EXCEPTIONS
+    // ========================================================================
+
+    @ExceptionHandler(AssignmentRuleNotFoundException.class)
+    public ResponseEntity<ApiError> handleAssignmentRuleNotFound(AssignmentRuleNotFoundException ex) {
+        log.error("Assignment rule not found: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiError.builder()
+                        .message(ex.getMessage())
+                        .errorCode("ASSIGNMENT_RULE_NOT_FOUND")
+                        .build());
+    }
+
+    @ExceptionHandler(InvalidRuleCriteriaException.class)
+    public ResponseEntity<ApiError> handleInvalidRuleCriteria(InvalidRuleCriteriaException ex) {
+        log.error("Invalid rule criteria: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.builder()
+                        .message(ex.getMessage())
+                        .errorCode("INVALID_RULE_CRITERIA")
+                        .build());
+    }
+
+    @ExceptionHandler(RuleExecutionException.class)
+    public ResponseEntity<ApiError> handleRuleExecution(RuleExecutionException ex) {
+        log.error("Rule execution error: {}", ex.getMessage(), ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiError.builder()
+                        .message(ex.getMessage())
+                        .errorCode("RULE_EXECUTION_ERROR")
+                        .build());
+    }
+
 }

@@ -26,44 +26,14 @@ public class CourseModule {
     @JoinColumn(name = "courseId")
     private Course course;
 
-    @OneToMany(mappedBy = "courseModule")
+    @OneToMany(mappedBy = "courseModule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ModuleContent> moduleContents;
 
-
-
-
+    public void addContent(ModuleContent content) {
+        moduleContents.add(content);
+        content.setCourseModule(this);
+    }
 
 
 }
 
-/*
-
- course Modules.
-  Module01
-  Module02
-  Module03
-
-  see this all modules will belong to one unique course.
-
-  so this moudles would have something to refere to a course.
-
-  so it would be a course that's here a course would be linked to this moudles.
- */
-
-
-/*
-Now for module content.
-
-each module will have different videos.
-module01
- -vidoe01
- -video02
- -video03
-
- simalry for for module02
-
- so one module is having many videos.
-
-
-
- */

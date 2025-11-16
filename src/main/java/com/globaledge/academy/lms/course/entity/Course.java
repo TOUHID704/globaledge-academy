@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -31,25 +32,23 @@ public class Course {
 
     private boolean isPublished = false;
 
-    @OneToMany(mappedBy = "course")
+    private String instructor;
+
+    private Integer estimatedDuration;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime publishedAt;
+
+    private String createdBy;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CourseModule> modules;
 
-
-
+    public void addModule(CourseModule module) {
+        modules.add(module);
+        module.setCourse(this);
+    }
 
 }
 
-
-    /*
-      for example a course will look like
-      course01
-      course02
-      course03
-
-      so each course will have many modules
-      cours01
-       -module01
-       -module02
-
-       so the relationships become like one course will have many modules.
-     */

@@ -6,10 +6,9 @@ import com.globaledge.academy.lms.course.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +22,35 @@ public class CourseController {
         CourseDto createdCourse = courseService.createCourse(courseDto);
         return ResponseEntity.ok(createdCourse);
 
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<CourseDto>> getAllCourses() {
+        return ResponseEntity.ok(courseService.getAllCourses());
+    }
+
+    @GetMapping("/{courseId}")
+    public ResponseEntity<CourseDto> getCourseById(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.getCourseById(courseId));
+    }
+
+    @PutMapping("/{courseId}")
+    public ResponseEntity<CourseDto> updateCourse(
+            @PathVariable Long courseId,
+            @RequestBody CourseDto courseDto
+    ) {
+        return ResponseEntity.ok(courseService.updateCourse(courseId, courseDto));
+    }
+
+    @PostMapping("/{courseId}/publish")
+    public ResponseEntity<CourseDto> publishCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(courseService.publishCourse(courseId));
+    }
+
+    @DeleteMapping("/{courseId}")
+    public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
+        courseService.deleteCourse(courseId);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -1,19 +1,15 @@
 package com.globaledge.academy.lms.course.dto;
 
-import com.globaledge.academy.lms.course.entity.CourseModule;
 import com.globaledge.academy.lms.course.enums.ContentType;
-import jakarta.persistence.*;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ModuleContentDto {
+
     private Long moduleContentId;
 
     private String title;
@@ -24,7 +20,4 @@ public class ModuleContentDto {
 
     private String mediaUrl;
 
-
-
 }
-

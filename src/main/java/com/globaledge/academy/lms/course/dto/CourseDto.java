@@ -1,20 +1,17 @@
 package com.globaledge.academy.lms.course.dto;
 
-import com.globaledge.academy.lms.course.entity.CourseModule;
 import com.globaledge.academy.lms.course.enums.CourseCategory;
 import com.globaledge.academy.lms.course.enums.DifficultyLevel;
-import jakarta.persistence.OneToMany;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
-@Builder
-@NoArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class CourseDto {
 
     private Long courseId;
@@ -27,8 +24,17 @@ public class CourseDto {
 
     private CourseCategory courseCategory;
 
-    private boolean isPublished = false;
+    private boolean published;
 
-    private List<CourseModuleDto> modules;
+    private String instructor;
 
+    private Integer estimatedDuration;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime publishedAt;
+
+    private String createdBy;
+
+    private List<CourseModuleDto> modules;   // Avoid exposing entities
 }

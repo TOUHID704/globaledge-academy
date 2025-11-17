@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -73,5 +74,20 @@ public class CourseController {
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
         return ResponseEntity.noContent().build();
+    }
+
+
+    @PostMapping("/{courseId}/execute-immediate-rules")
+    public ResponseEntity<Map<String, Object>> executeImmediateRules(@PathVariable Long courseId) {
+        CourseDto course = courseService.getCourseById(courseId);
+
+        if (course.getCourseStatus() != CourseStatus.PUBLISHED) {
+            throw new IllegalStateException("Course must be published before executing rules");
+        }
+
+        // Re-execute immediate rules for already published course
+        Map<String, Object> result = courseService.reExecuteImmediateRules(courseId);
+
+        return ResponseEntity.ok(result);
     }
 }

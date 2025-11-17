@@ -5,6 +5,7 @@ import com.globaledge.academy.lms.course.enums.CourseCategory;
 import com.globaledge.academy.lms.course.enums.CourseStatus;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CourseService {
     CourseDto createCourse(CourseDto courseDto);
@@ -18,4 +19,5 @@ public interface CourseService {
     CourseDto unpublishCourse(Long courseId);
     void deleteCourse(Long courseId);
     long countByStatus(CourseStatus status);
+    Map<String, Object> reExecuteImmediateRules(Long courseId);
 }

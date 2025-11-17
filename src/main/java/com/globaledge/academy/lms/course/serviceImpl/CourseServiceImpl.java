@@ -1,5 +1,6 @@
 package com.globaledge.academy.lms.course.serviceImpl;
 
+import com.globaledge.academy.lms.assignment.dto.RuleExecutionResultDto;
 import com.globaledge.academy.lms.assignment.entity.CourseAssignmentRule;
 import com.globaledge.academy.lms.assignment.enums.ExecutionFrequency;
 import com.globaledge.academy.lms.assignment.enums.RuleStatus;
@@ -18,6 +19,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -142,18 +144,59 @@ public class CourseServiceImpl implements CourseService {
 
         Course saved = courseRepository.save(course);
 
-        // 🔥 TRIGGER IMMEDIATE RULE EXECUTION
-        executeImmediateRules(courseId);
+        // ✅ ENHANCED: Track execution results
+        int rulesExecutedCount = 0;
+        int totalEnrollments = 0;
+
+        try {
+            List<CourseAssignmentRule> immediateRules = assignmentRuleRepository
+                    .findByCourse_CourseId(courseId).stream()
+                    .filter(rule -> rule.isActive()
+                            && rule.getRuleStatus() == RuleStatus.ACTIVE
+                            && rule.getExecutionFrequency() == ExecutionFrequency.IMMEDIATE)
+                    .collect(Collectors.toList());
+
+            rulesExecutedCount = immediateRules.size();
+
+            // Execute immediate rules
+            executeImmediateRules(courseId);
+
+            // Calculate total enrollments created
+            for (CourseAssignmentRule rule : immediateRules) {
+                if (rule.getLastMatchedCount() != null) {
+                    totalEnrollments += rule.getLastMatchedCount();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error during immediate rule execution: {}", e.getMessage());
+        }
 
         log.info("Course published successfully: {}", courseId);
-        return mapToDto(saved);
+
+        // ✅ BUILD RESPONSE WITH SUMMARY
+        CourseDto dto = mapToDto(saved);
+        dto.setImmediateRulesExecuted(rulesExecutedCount);
+        dto.setTotalEnrollmentsCreated(totalEnrollments);
+
+        if (rulesExecutedCount > 0) {
+            dto.setPublishSummary(String.format(
+                    "Course published successfully. %d rule(s) executed, %d employee(s) enrolled.",
+                    rulesExecutedCount, totalEnrollments
+            ));
+        } else {
+            dto.setPublishSummary(
+                    "Course published successfully. No immediate enrollment rules found. " +
+                            "Create rules with IMMEDIATE frequency to auto-enroll employees on publish."
+            );
+        }
+
+        return dto;
     }
 
 
-    // 🆕 ADD THIS METHOD
     private void executeImmediateRules(Long courseId) {
         try {
-            log.info("Checking for immediate assignment rules for course: {}", courseId);
+            log.info("=== Executing Immediate Assignment Rules for Course: {} ===", courseId);
 
             List<CourseAssignmentRule> immediateRules = assignmentRuleRepository
                     .findByCourse_CourseId(courseId).stream()
@@ -164,22 +207,48 @@ public class CourseServiceImpl implements CourseService {
 
             if (immediateRules.isEmpty()) {
                 log.info("No immediate rules found for course: {}", courseId);
+                log.info("To auto-enroll employees, create rules with IMMEDIATE frequency before publishing");
                 return;
             }
 
             log.info("Found {} immediate rules to execute for course: {}", immediateRules.size(), courseId);
 
+            int totalEnrolled = 0;
+            int totalSkipped = 0;
+            int rulesExecuted = 0;
+            int rulesFailed = 0;
+
             for (CourseAssignmentRule rule : immediateRules) {
                 try {
-                    log.info("Executing immediate rule: {} ({})", rule.getRuleName(), rule.getRuleId());
-                    ruleExecutionService.executeRule(rule);
+                    log.info("Executing immediate rule: '{}' (ID: {})", rule.getRuleName(), rule.getRuleId());
+
+                    RuleExecutionResultDto result = ruleExecutionService.executeRule(rule);
+
+                    if (result.isSuccess()) {
+                        totalEnrolled += result.getEnrollmentsCreated();
+                        totalSkipped += result.getEnrollmentsSkipped();
+                        rulesExecuted++;
+                        log.info("Rule '{}' executed successfully: {} enrollments created, {} skipped",
+                                rule.getRuleName(), result.getEnrollmentsCreated(), result.getEnrollmentsSkipped());
+                    } else {
+                        rulesFailed++;
+                        log.error("Rule '{}' execution failed: {}", rule.getRuleName(), result.getMessage());
+                    }
+
                 } catch (Exception e) {
-                    log.error("Error executing immediate rule {}: {}", rule.getRuleId(), e.getMessage(), e);
-                    // Continue with other rules even if one fails
+                    rulesFailed++;
+                    log.error("Error executing immediate rule {} ({}): {}",
+                            rule.getRuleName(), rule.getRuleId(), e.getMessage(), e);
                 }
             }
 
-            log.info("Completed executing immediate rules for course: {}", courseId);
+            log.info("=== Immediate Rules Execution Summary ===");
+            log.info("Total rules found: {}", immediateRules.size());
+            log.info("Rules executed successfully: {}", rulesExecuted);
+            log.info("Rules failed: {}", rulesFailed);
+            log.info("Total enrollments created: {}", totalEnrolled);
+            log.info("Total enrollments skipped: {}", totalSkipped);
+            log.info("===========================================");
 
         } catch (Exception e) {
             log.error("Error executing assignment rules for course {}: {}", courseId, e.getMessage(), e);
@@ -219,5 +288,56 @@ public class CourseServiceImpl implements CourseService {
 
     private Course mapToEntity(CourseDto dto) {
         return modelMapper.map(dto, Course.class);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> reExecuteImmediateRules(Long courseId) {
+        log.info("Re-executing immediate rules for published course: {}", courseId);
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found: " + courseId));
+
+        if (course.getCourseStatus() != CourseStatus.PUBLISHED) {
+            throw new IllegalStateException("Course must be published to execute immediate rules");
+        }
+
+        List<CourseAssignmentRule> immediateRules = assignmentRuleRepository
+                .findByCourse_CourseId(courseId).stream()
+                .filter(rule -> rule.isActive()
+                        && rule.getRuleStatus() == RuleStatus.ACTIVE
+                        && rule.getExecutionFrequency() == ExecutionFrequency.IMMEDIATE)
+                .collect(Collectors.toList());
+
+        if (immediateRules.isEmpty()) {
+            return Map.of(
+                    "success", false,
+                    "message", "No immediate rules found for this course",
+                    "rulesExecuted", 0,
+                    "enrollmentsCreated", 0
+            );
+        }
+
+        int totalEnrollments = 0;
+        int rulesExecuted = 0;
+
+        for (CourseAssignmentRule rule : immediateRules) {
+            try {
+                RuleExecutionResultDto result = ruleExecutionService.executeRule(rule);
+                if (result.isSuccess()) {
+                    totalEnrollments += result.getEnrollmentsCreated();
+                    rulesExecuted++;
+                }
+            } catch (Exception e) {
+                log.error("Error executing rule {}: {}", rule.getRuleId(), e.getMessage());
+            }
+        }
+
+        return Map.of(
+                "success", true,
+                "message", String.format("Executed %d rule(s), created %d enrollment(s)", rulesExecuted, totalEnrollments),
+                "rulesExecuted", rulesExecuted,
+                "enrollmentsCreated", totalEnrollments
+        );
     }
 }

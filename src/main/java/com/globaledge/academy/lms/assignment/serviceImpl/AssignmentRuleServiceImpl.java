@@ -38,7 +38,8 @@ public class AssignmentRuleServiceImpl implements AssignmentRuleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with ID: " + ruleDto.getCourseId()));
 
         if (course.getCourseStatus() != CourseStatus.PUBLISHED) {
-            throw new IllegalStateException("Cannot create rule for unpublished course");
+            log.warn("Creating rule for unpublished course: {}. Rule will execute when course is published.",
+                    course.getTitle());
         }
 
         // Validate criteria

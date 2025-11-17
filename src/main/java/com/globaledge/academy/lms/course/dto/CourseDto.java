@@ -38,4 +38,8 @@ public class CourseDto {
     private String createdBy;
 
     private List<CourseModuleDto> modules;
+
+    private Integer immediateRulesExecuted;
+    private Integer totalEnrollmentsCreated;
+    private String publishSummary;
 }

@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -13,10 +14,15 @@ import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 
+/**
+ * Gmail-based email notification service implementation.
+ * This service is activated when app.email.provider=gmail in application.properties
+ */
 @Slf4j
-@Service
+@Service("gmailNotificationService")
 @RequiredArgsConstructor
-public class EmailNotificationServiceImpl implements NotificationService {
+@ConditionalOnProperty(name = "app.email.provider", havingValue = "gmail")
+public class GmailNotificationServiceImpl implements NotificationService {
 
     private final JavaMailSender mailSender;
 
@@ -44,12 +50,11 @@ public class EmailNotificationServiceImpl implements NotificationService {
             helper.setText(emailBody, true);
 
             mailSender.send(message);
-            log.info("Welcome email sent successfully to {}", email);
+            log.info("[Gmail] Welcome email sent successfully to {}", email);
 
         } catch (MessagingException e) {
-            log.error("Failed to send welcome email to {}: {}", email, e.getMessage(), e);
-            // Log to console as fallback
-            logEmailToConsole("WELCOME EMAIL", email, username, temporaryPassword);
+            log.error("[Gmail] Failed to send welcome email to {}: {}", email, e.getMessage(), e);
+            logEmailToConsole("WELCOME EMAIL [Gmail]", email, username, temporaryPassword);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -72,11 +77,10 @@ public class EmailNotificationServiceImpl implements NotificationService {
             helper.setText(emailBody, true);
 
             mailSender.send(message);
-            log.info("Password reset email sent successfully to {}", email);
+            log.info("[Gmail] Password reset email sent successfully to {}", email);
 
         } catch (MessagingException e) {
-            log.error("Failed to send password reset email to {}: {}", email, e.getMessage(), e);
-            // Log to console as fallback
+            log.error("[Gmail] Failed to send password reset email to {}: {}", email, e.getMessage(), e);
             logPasswordResetToConsole(email, resetUrl);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
@@ -98,10 +102,10 @@ public class EmailNotificationServiceImpl implements NotificationService {
             helper.setText(emailBody, true);
 
             mailSender.send(message);
-            log.info("Password changed confirmation sent successfully to {}", email);
+            log.info("[Gmail] Password changed confirmation sent successfully to {}", email);
 
         } catch (MessagingException e) {
-            log.error("Failed to send password changed confirmation to {}: {}", email, e.getMessage(), e);
+            log.error("[Gmail] Failed to send password changed confirmation to {}: {}", email, e.getMessage(), e);
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -236,7 +240,6 @@ public class EmailNotificationServiceImpl implements NotificationService {
             """;
     }
 
-    // Fallback method to log emails to console
     private void logEmailToConsole(String type, String email, String username, String temporaryPassword) {
         log.info("=".repeat(80));
         log.info("{}", type);
@@ -250,7 +253,7 @@ public class EmailNotificationServiceImpl implements NotificationService {
 
     private void logPasswordResetToConsole(String email, String resetUrl) {
         log.info("=".repeat(80));
-        log.info("PASSWORD RESET EMAIL");
+        log.info("PASSWORD RESET EMAIL [Gmail]");
         log.info("To: {}", email);
         log.info("Reset URL: {}", resetUrl);
         log.info("=".repeat(80));

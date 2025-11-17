@@ -7,9 +7,11 @@ import com.globaledge.academy.lms.user.service.impl.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,7 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @RequiredArgsConstructor
-@EnableWebSecurity
+//@EnableWebSecurity
+//@EnableMethodSecurity(prePostEnabled = true) //  Enable method-level security
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -51,6 +54,29 @@ public class SecurityConfig {
 //                .csrf(csrf -> csrf.disable())
 //                .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
+//
+//                        //  ADMIN-ONLY ENDPOINTS
+//                        // Employee Import APIs
+//                        .requestMatchers(HttpMethod.POST, "/employees/import/**").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.GET, "/employees/import/history/**").hasRole("ADMIN")
+//
+//                        // Course Management APIs (Create, Update, Delete, Publish)
+//                        .requestMatchers(HttpMethod.POST, "/courses/createCourse").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.PUT, "/courses/**").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.DELETE, "/courses/**").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.POST, "/courses/*/publish").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.POST, "/courses/*/unpublish").hasRole("ADMIN")
+//                        .requestMatchers(HttpMethod.POST, "/courses/*/execute-immediate-rules").hasRole("ADMIN")
+//
+//                        // Assignment Rule APIs (All operations)
+//                        .requestMatchers("/assignment/rules/**").hasRole("ADMIN")
+//
+//                        //  USER ENDPOINTS (Read-only access to courses)
+//                        .requestMatchers(HttpMethod.GET, "/courses/**").authenticated()
+//
+//                        //  ENROLLMENT ENDPOINTS (Users can manage their own enrollments)
+//                        .requestMatchers("/enrollments/**").authenticated()
+//
 //                        .anyRequest().authenticated()
 //                )
 //                .exceptionHandling(exception -> exception
@@ -64,8 +90,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().permitAll())
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(basicAuth -> basicAuth.disable());
-
-
         return http.build();
     }
 }

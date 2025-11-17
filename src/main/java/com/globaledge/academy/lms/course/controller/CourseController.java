@@ -6,6 +6,7 @@ import com.globaledge.academy.lms.course.enums.CourseStatus;
 import com.globaledge.academy.lms.course.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -17,20 +18,20 @@ public class CourseController {
 
     private final CourseService courseService;
 
-
+    @PreAuthorize("hasRole('ADMIN')") //  Added
     @PostMapping("/createCourse")
     public ResponseEntity<CourseDto> createCourse(@RequestBody CourseDto courseDto){
         CourseDto createdCourse = courseService.createCourse(courseDto);
         return ResponseEntity.ok(createdCourse);
     }
 
-    // Update
+    @PreAuthorize("hasRole('ADMIN')") //  Added
     @PutMapping("/{courseId}")
     public ResponseEntity<CourseDto> updateCourse(@PathVariable Long courseId, @RequestBody CourseDto courseDto) {
         return ResponseEntity.ok(courseService.updateCourse(courseId, courseDto));
     }
 
-    // Get all, optional filters: ?status=PUBLISHED or ?category=TECHNICAL
+    //  GET endpoints remain accessible to authenticated users
     @GetMapping
     public ResponseEntity<List<CourseDto>> getAllCourses(
             @RequestParam(required = false) CourseStatus status,
@@ -45,38 +46,36 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
-    // Get published only
     @GetMapping("/published")
     public ResponseEntity<List<CourseDto>> getPublished() {
         return ResponseEntity.ok(courseService.getPublishedCourses());
     }
 
-    // Get by id
     @GetMapping("/{courseId}")
     public ResponseEntity<CourseDto> getCourseById(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.getCourseById(courseId));
     }
 
-    // Publish
+    @PreAuthorize("hasRole('ADMIN')") //  Added
     @PostMapping("/{courseId}/publish")
     public ResponseEntity<CourseDto> publishCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.publishCourse(courseId));
     }
 
-    // Unpublish (move back to draft)
+    @PreAuthorize("hasRole('ADMIN')") //  Added
     @PostMapping("/{courseId}/unpublish")
     public ResponseEntity<CourseDto> unpublishCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(courseService.unpublishCourse(courseId));
     }
 
-    // Delete
+    @PreAuthorize("hasRole('ADMIN')") //  Added
     @DeleteMapping("/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable Long courseId) {
         courseService.deleteCourse(courseId);
         return ResponseEntity.noContent().build();
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')") //  Added
     @PostMapping("/{courseId}/execute-immediate-rules")
     public ResponseEntity<Map<String, Object>> executeImmediateRules(@PathVariable Long courseId) {
         CourseDto course = courseService.getCourseById(courseId);
@@ -85,9 +84,7 @@ public class CourseController {
             throw new IllegalStateException("Course must be published before executing rules");
         }
 
-        // Re-execute immediate rules for already published course
         Map<String, Object> result = courseService.reExecuteImmediateRules(courseId);
-
         return ResponseEntity.ok(result);
     }
 }

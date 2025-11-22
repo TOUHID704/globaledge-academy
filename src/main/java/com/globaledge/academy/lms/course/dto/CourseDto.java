@@ -21,6 +21,8 @@ public class CourseDto {
 
     private String description;
 
+    private Long thumbnailMediaId;
+
     private String thumbnailUrl;
 
     private CourseCategory courseCategory;

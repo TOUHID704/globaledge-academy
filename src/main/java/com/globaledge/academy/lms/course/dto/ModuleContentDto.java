@@ -18,6 +18,7 @@ public class ModuleContentDto {
 
     private ContentType contentType;
 
-    private String mediaUrl;
+    private Long mediaId;
 
+    private String mediaUrl;
 }

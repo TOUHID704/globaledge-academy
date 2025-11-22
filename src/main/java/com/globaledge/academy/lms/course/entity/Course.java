@@ -28,6 +28,10 @@ public class Course {
     @Column(length = 4000)
     private String description;
 
+    @Column(name = "thumbnail_media_id")
+    private Long thumbnailMediaId;
+
+    @Transient
     private String thumbnailUrl;
 
     @Enumerated(EnumType.STRING)

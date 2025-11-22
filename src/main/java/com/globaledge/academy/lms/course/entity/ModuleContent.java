@@ -26,6 +26,11 @@ public class ModuleContent {
     @Enumerated(EnumType.STRING)
     private ContentType contentType;
 
+    @Column(name = "media_id")
+    private Long mediaId;
+
+
+    @Transient
     private String mediaUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

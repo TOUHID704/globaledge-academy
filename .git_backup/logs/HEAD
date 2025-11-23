@@ -1,0 +1,24 @@
+0000000000000000000000000000000000000000 95d96fb5bd74993d112e8944981e5515cca0c6a2 Adil Sayyed <adils@Desktop-PC.(none)> 1761372450 +0530	clone: from https://github.com/TOUHID704/globaledge-academy
+95d96fb5bd74993d112e8944981e5515cca0c6a2 b671b4f74934709a19f4e5f3a817b1e9e2cd8918 Adil Sayyed <adilsayyed1491@gmail.com> 1761372910 +0530	commit: Added a file car.java
+b671b4f74934709a19f4e5f3a817b1e9e2cd8918 d7bcbff301fb2769cde72ef0b370abf04786057a Adil Sayyed <adilsayyed1491@gmail.com> 1761373831 +0530	pull: Fast-forward
+d7bcbff301fb2769cde72ef0b370abf04786057a 3f31fb468427f7683855a6c78f286badb1de3dcb Adil Sayyed <adilsayyed1491@gmail.com> 1761487007 +0530	commit: Added a bulk signup feature
+3f31fb468427f7683855a6c78f286badb1de3dcb a1197da8ecaa988182599c463d4e911bf37dbd91 Adil Sayyed <adilsayyed1491@gmail.com> 1762691798 +0530	commit: added a course module
+a1197da8ecaa988182599c463d4e911bf37dbd91 ff5e7bedbf29f26c7840b05d31b2a81ee1c56107 Adil Sayyed <adilsayyed1491@gmail.com> 1763292299 +0530	commit: added a course package
+ff5e7bedbf29f26c7840b05d31b2a81ee1c56107 4d87db18b6450e0cd683dd65a5484e9173af3d38 Adil Sayyed <adilsayyed1491@gmail.com> 1763300758 +0530	commit: course
+4d87db18b6450e0cd683dd65a5484e9173af3d38 00ccbd91cd48dcaab8e82a3c1bda491214d2b9cd Adil Sayyed <adilsayyed1491@gmail.com> 1763306843 +0530	commit: added assignment
+00ccbd91cd48dcaab8e82a3c1bda491214d2b9cd 25387b9d32724d52a265fc4261458722bbd94156 Adil Sayyed <adilsayyed1491@gmail.com> 1763309888 +0530	commit: added
+25387b9d32724d52a265fc4261458722bbd94156 3d667523d6b15767dbce0ed1fa375fc8d71fbfc9 Adil Sayyed <adilsayyed1491@gmail.com> 1763374825 +0530	commit: let start
+3d667523d6b15767dbce0ed1fa375fc8d71fbfc9 44258f5e644c9b2c2d3714660967c93efb833e00 Adil Sayyed <adilsayyed1491@gmail.com> 1763379034 +0530	commit: added outlook
+44258f5e644c9b2c2d3714660967c93efb833e00 6c035d1540b33e3c2aface0dd33fde22b4150d70 Adil Sayyed <adilsayyed1491@gmail.com> 1763819351 +0530	commit: thinking of S3
+6c035d1540b33e3c2aface0dd33fde22b4150d70 7f8164b5fd3035433c401ae173dae34351e5fa50 Adil Sayyed <adilsayyed1491@gmail.com> 1763824702 +0530	commit: go
+7f8164b5fd3035433c401ae173dae34351e5fa50 1f656fcb9a11793a1fbe22a8b145fc1ec9b8fbc7 Adil Sayyed <adilsayyed1491@gmail.com> 1763872809 +0530	commit: added the media
+1f656fcb9a11793a1fbe22a8b145fc1ec9b8fbc7 16a79a507983f91dc80a96403fdeb8f5655f1492 Adil Sayyed <adilsayyed1491@gmail.com> 1763873168 +0530	commit: fix it
+16a79a507983f91dc80a96403fdeb8f5655f1492 1408d9398813c049a91adcc04ff4c89ff87e2f10 Adil Sayyed <adilsayyed1491@gmail.com> 1763873295 +0530	commit (amend): fix it
+1408d9398813c049a91adcc04ff4c89ff87e2f10 b5f7287050b674d52d359b2fc7ce3f55a35a4fcc Adil Sayyed <adilsayyed1491@gmail.com> 1763875447 +0530	commit: fk up
+b5f7287050b674d52d359b2fc7ce3f55a35a4fcc b5f7287050b674d52d359b2fc7ce3f55a35a4fcc Adil Sayyed <adilsayyed1491@gmail.com> 1763875643 +0530	reset: moving to HEAD
+b5f7287050b674d52d359b2fc7ce3f55a35a4fcc 1408d9398813c049a91adcc04ff4c89ff87e2f10 Adil Sayyed <adilsayyed1491@gmail.com> 1763875647 +0530	checkout: moving from main to 1408d93
+1408d9398813c049a91adcc04ff4c89ff87e2f10 1408d9398813c049a91adcc04ff4c89ff87e2f10 Adil Sayyed <adilsayyed1491@gmail.com> 1763875672 +0530	checkout: moving from 1408d9398813c049a91adcc04ff4c89ff87e2f10 to fix-it-branch
+1408d9398813c049a91adcc04ff4c89ff87e2f10 7f8164b5fd3035433c401ae173dae34351e5fa50 Adil Sayyed <adilsayyed1491@gmail.com> 1763876079 +0530	rebase (start): checkout 7f8164b
+7f8164b5fd3035433c401ae173dae34351e5fa50 1408d9398813c049a91adcc04ff4c89ff87e2f10 Adil Sayyed <adilsayyed1491@gmail.com> 1763876142 +0530	rebase (abort): returning to refs/heads/fix-it-branch
+1408d9398813c049a91adcc04ff4c89ff87e2f10 1408d9398813c049a91adcc04ff4c89ff87e2f10 Adil Sayyed <adilsayyed1491@gmail.com> 1763876148 +0530	checkout: moving from fix-it-branch to 1408d93
+1408d9398813c049a91adcc04ff4c89ff87e2f10 1408d9398813c049a91adcc04ff4c89ff87e2f10 Adil Sayyed <adilsayyed1491@gmail.com> 1763876156 +0530	checkout: moving from 1408d9398813c049a91adcc04ff4c89ff87e2f10 to clean-fix

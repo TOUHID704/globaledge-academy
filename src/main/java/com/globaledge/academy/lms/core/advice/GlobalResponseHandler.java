@@ -11,55 +11,65 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
-/**
- * Intercepts successful responses from controllers to wrap them in a standard ApiResponse format.
- * This ensures all successful API calls have a consistent JSON structure.
- */
-//@RestControllerAdvice(basePackages = "com.globaledgeacademy.userservice.controller")
 @RestControllerAdvice
 public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
 
     @Override
-    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(MethodParameter returnType,
+                            Class<? extends HttpMessageConverter<?>> converterType) {
         return true;
     }
 
     @Override
-    public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
+    public Object beforeBodyWrite(Object body,
+                                  MethodParameter returnType,
+                                  MediaType selectedContentType,
                                   Class<? extends HttpMessageConverter<?>> selectedConverterType,
-                                  ServerHttpRequest request, ServerHttpResponse response) {
+                                  ServerHttpRequest request,
+                                  ServerHttpResponse response) {
 
-        // If the controller is returning an error, don't wrap it.
+        // 1️⃣ Do not wrap Swagger/OpenAPI responses
+        if (isSwaggerRequest(request)) {
+            return body;
+        }
+
+        // 2️⃣ Do not wrap ApiError
         if (body instanceof ApiError) {
             return body;
         }
 
-        if(body instanceof String){
+        // 3️⃣ Do not wrap strings (StringHttpMessageConverter)
+        if (body instanceof String) {
             return body;
         }
 
-        // --- FIX STARTS HERE ---
-        // If the body is a Resource (a file download), do not wrap it.
-        // Let Spring's ResourceHttpMessageConverter handle it directly.
+        // 4️⃣ Do not wrap raw file resources (file downloads)
         if (body instanceof Resource) {
             return body;
         }
-        // --- FIX ENDS HERE ---
 
-        // If the controller already returned a pre-formatted ApiResponse, don't wrap it again.
+        // 5️⃣ If already wrapped, do not wrap again
         if (body instanceof ApiResponse) {
             return body;
         }
 
-        // If the endpoint is for Swagger/OpenAPI documentation, don't wrap it.
-        if (request.getURI().getPath().contains("api-docs")) {
-            return body;
-        }
-
-        // For all other successful responses, wrap them in the standard ApiResponse structure.
+        // 6️⃣ Wrap all other successful responses
         return ApiResponse.builder()
                 .message("Operation completed successfully")
                 .data(body)
                 .build();
+    }
+
+    /**
+     * Checks whether the current request is for Swagger/OpenAPI documentation.
+     * These requests must not be wrapped.
+     */
+    private boolean isSwaggerRequest(ServerHttpRequest request) {
+        String path = request.getURI().getPath();
+
+        return path.contains("swagger")
+                || path.contains("api-docs")
+                || path.contains("openapi")
+                || path.contains("swagger-ui");
     }
 }

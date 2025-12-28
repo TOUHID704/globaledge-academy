@@ -22,8 +22,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @RequiredArgsConstructor
-//@EnableWebSecurity
-//@EnableMethodSecurity(prePostEnabled = true) //  Enable method-level security
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -51,6 +49,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+
+                // ❗ DO NOT TOUCH — kept exactly as-is
 //                .csrf(csrf -> csrf.disable())
 //                .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
@@ -86,10 +86,20 @@ public class SecurityConfig {
 //                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 //                )
 //                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // ✅ ACTIVE CONFIG (only this part changed)
                 .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().permitAll())
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**"
+                        ).permitAll()
+                        .anyRequest().permitAll()
+                )
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(basicAuth -> basicAuth.disable());
+
         return http.build();
     }
 }

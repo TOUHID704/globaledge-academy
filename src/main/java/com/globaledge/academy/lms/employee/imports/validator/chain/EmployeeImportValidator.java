@@ -1,6 +1,5 @@
 package com.globaledge.academy.lms.employee.imports.validator.chain;
 
-
 import com.globaledge.academy.lms.employee.enums.ImportLogLevel;
 import com.globaledge.academy.lms.employee.imports.dto.EmployeeImportLogEntryDTO;
 import com.globaledge.academy.lms.employee.imports.model.EmployeeImportRecord;
@@ -15,71 +14,149 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Main validator that orchestrates all validation chains.
+ * MAIN VALIDATOR ORCHESTRATOR
  *
- * This class automatically picks up all implementations of ValidationChain
- * through Spring's dependency injection and executes them in order based
- * on their @Order annotation.
+ * This class does NOT perform validation itself.
+ * Instead, it:
+ *  - Collects all ValidationChain implementations
+ *  - Executes them one by one for each record
  *
- * Validation Chain Execution Order:
- * 1. StrategyCodeValidator - Import Type validation
- * 2. MandatoryFieldValidator - Mandatory fields presence
- * 3. EmailFormatValidator - Email format validation
- * 4. DateFormatValidator - Date format and business rules
- * 5. EnumFieldValidator - Enum field validation
- * 6. ManagerReferenceValidator - Manager reference validation
- * 7. OptionalFieldValidator - Optional field validation
+ * Think of this class as:
+ * 👉 "Validation Manager / Coordinator"
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EmployeeImportValidator {
 
+    /**
+     * List of all validation chain implementations.
+     *
+     * Spring automatically injects:
+     *  - StrategyCodeValidator
+     *  - MandatoryFieldValidator
+     *  - EmailFormatValidator
+     *  - DateFormatValidator
+     *  - EnumFieldValidator
+     *  - ManagerReferenceValidator
+     *  - OptionalFieldValidator
+     *
+     * Order is controlled by @Order annotation on each validator.
+     */
     private final List<ValidationChain> validators;
 
     /**
-     * Validates a list of employee import records.
+     * ENTRY POINT for validation.
      *
-     * @param records List of records to validate
-     * @param employeeIdsInBatch Set of all employee IDs in the current batch for cross-referencing
-     * @return List of validation results with errors and warnings
+     * This method is called from EmployeeImportService.
+     *
+     * @param records
+     *  - List of parsed Excel records
+     *  - Each record represents ONE Excel row
+     *
+     * @param employeeIdsInBatch
+     *  - Set of all employee IDs in the uploaded file
+     *  - Used for cross-record validations (e.g., manager reference)
+     *
+     * @return
+     *  - List of validation results
+     *  - Each result contains:
+     *      - original record
+     *      - list of errors
+     *      - list of warnings
      */
-    public List<EmployeeImportValidationResult> validateRecords(List<EmployeeImportRecord> records, Set<String> employeeIdsInBatch) {
+    public List<EmployeeImportValidationResult> validateRecords(
+            List<EmployeeImportRecord> records,
+            Set<String> employeeIdsInBatch) {
+
         log.info("Starting validation for {} records.", records.size());
 
-        List<EmployeeImportValidationResult> results = records.stream().map(record -> {
-            EmployeeImportValidationResult result = EmployeeImportValidationResult.builder()
-                    .record(record)
-                    .build();
+        // STEP 1:
+        // Convert each EmployeeImportRecord into a ValidationResult
+        List<EmployeeImportValidationResult> results = records.stream()
 
-            // Execute all validators in order
-            validators.forEach(validator -> validator.validate(result, employeeIdsInBatch));
+                .map(record -> {
 
-            return result;
-        }).collect(Collectors.toList());
+                    // STEP 2:
+                    // Create validation result object for THIS record
+                    EmployeeImportValidationResult result =
+                            EmployeeImportValidationResult.builder()
+                                    .record(record)
+                                    .build();
 
-        long errorCount = results.stream().filter(EmployeeImportValidationResult::hasErrors).count();
-        long warningCount = results.stream().filter(EmployeeImportValidationResult::hasWarnings).count();
+                    // STEP 3:
+                    // Execute ALL validators one by one
+                    //
+                    // Flow:
+                    //  Validator 1 → Validator 2 → Validator 3 → ...
+                    //
+                    // Each validator:
+                    //  - reads record data
+                    //  - adds errors/warnings to result if needed
+                    validators.forEach(validator ->
+                            validator.validate(result, employeeIdsInBatch)
+                    );
 
-        log.info("Validation complete. Found {} records with errors and {} records with warnings.", errorCount, warningCount);
+                    // STEP 4:
+                    // Return result after all validations are done
+                    return result;
+                })
 
+                // STEP 5:
+                // Collect all validation results into a list
+                .collect(Collectors.toList());
+
+        // STEP 6:
+        // Count how many records have errors
+        long errorCount = results.stream()
+                .filter(EmployeeImportValidationResult::hasErrors)
+                .count();
+
+        // STEP 7:
+        // Count how many records have warnings
+        long warningCount = results.stream()
+                .filter(EmployeeImportValidationResult::hasWarnings)
+                .count();
+
+        log.info("Validation complete. Found {} records with errors and {} records with warnings.",
+                errorCount, warningCount);
+
+        // STEP 8:
+        // Return validation results back to Service layer
         return results;
     }
 
     /**
-     * Creates a log entry with ERROR level.
-     * This method is kept for backward compatibility.
+     * Helper method to create an ERROR log entry.
      *
-     * @param record The employee import record
-     * @param message The error message
-     * @return EmployeeImportLogEntryDTO with ERROR level
-     * @deprecated Use ValidationChain.createLog() instead
+     * NOTE:
+     * This method is kept only for backward compatibility.
+     * New validators should use ValidationChain.createLog().
+     *
+     * @param record
+     *  - The Excel record that caused the error
+     *
+     * @param message
+     *  - Error message to show in import log
+     *
+     * @return
+     *  - Log entry with ERROR level
      */
-    public EmployeeImportLogEntryDTO createLog(EmployeeImportRecord record, String message) {
+    public EmployeeImportLogEntryDTO createLog(
+            EmployeeImportRecord record,
+            String message) {
+
         return EmployeeImportLogEntryDTO.builder()
+
+                // Log level = ERROR
                 .level(ImportLogLevel.ERROR)
+
+                // Identifier shown in log (e.g. "Row 5")
                 .identifier("Row " + record.getRowNumber())
+
+                // Actual error message
                 .message(message)
+
                 .build();
     }
 }

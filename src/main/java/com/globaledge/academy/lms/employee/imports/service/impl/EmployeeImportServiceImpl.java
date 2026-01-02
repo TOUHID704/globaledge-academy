@@ -84,7 +84,7 @@ public class EmployeeImportServiceImpl implements EmployeeImportService {
             List<EmployeeImportLogEntryDTO> allLogs = collectAllLogs(validationResults);
             String logFilePath = null, logFileName = null;
             if (!allLogs.isEmpty()) {
-                logFileName = generateLogFileName(file.getOriginalFilename());
+                logFileName = generateLogFileName(Objects.requireNonNull(file.getOriginalFilename()));
                 logFilePath = logWriter.writeLogFile(allLogs, logFileName);
             }
 
